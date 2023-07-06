@@ -1,0 +1,20 @@
+[tool.poetry]
+name = "gbcg3"
+version = "0.1.0"
+description = ""
+authors = ["hodakamori <kpnhodaka@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+numpy = "^1.25.0"
+ipykernel = "^6.24.0"
+
+
+[tool.poetry.group.dev.dependencies]
+pysen = "^0.10.4"
+pytest = "^7.4.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
