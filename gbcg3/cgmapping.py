@@ -1,10 +1,11 @@
-from dataclasses import dataclass, field
-from gbcg3.structure.lammps import LammpsStructure
-from gbcg3.cgmap.cgmap import CGMap
-from gbcg3.gbcg.gbcg import GraphBasedCoarseGraining
-from typing import List, Optional, IO, Literal
 import logging
 import os
+from dataclasses import dataclass, field
+from typing import IO, List, Literal, Optional
+
+from gbcg3.cgmap.cgmap import CGMap
+from gbcg3.gbcg.gbcg import GraphBasedCoarseGraining
+from gbcg3.structure.lammps import LammpsStructure
 
 
 @dataclass
@@ -27,7 +28,7 @@ class AA2CG:
     ] = logging.DEBUG
     log_filename: Optional[str] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.logger = logging.getLogger("gbcg3")
         self.logger.setLevel(logging.getLevelName(self.log_level))
 
@@ -47,7 +48,7 @@ class AA2CG:
         self.structure.assign_cgmap(self.cgmap)
         self.structure.assign_mols()
 
-    def run(self):
+    def run(self) -> None:
         gbcg = GraphBasedCoarseGraining(
             structure=self.structure,
             cgmap=self.cgmap,

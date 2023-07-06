@@ -1,8 +1,9 @@
 import copy
+import os
+from math import *
+
 import numpy as np
 from gbcg3.utils.logger import print_status
-from math import *
-import os 
 
 # ==================================================================
 # CONSTANTS AND DIRECTORIES
@@ -654,14 +655,7 @@ def assign_CG_types(output_dir, typing, sim_ratio, atoms, beadsList):
 # 'coords' - coordinates of the bead
 # 'id' - assigned ID
 def reduction_mapping(
-    logger,
-    niter,
-    min_level,
-    max_level,
-    max_size,
-    moli,
-    atoms,
-    adjlist
+    logger, niter, min_level, max_level, max_size, moli, atoms, adjlist
 ):
     history = []
     curr = {}

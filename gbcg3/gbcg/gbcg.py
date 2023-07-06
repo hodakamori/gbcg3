@@ -1,29 +1,30 @@
-from gbcg3.cgmap.cgmap import CGMap
-from dataclasses import dataclass, field
-from typing import List, Optional, Union, IO, Literal
-from gbcg3.structure.lammps import process_frame, skip_frame, LammpsStructure
-from gbcg3.utils.io import make_directories
-import logging
-
 import copy
+import logging
+import os
+import time
+from dataclasses import dataclass, field
+from typing import IO, List, Literal, Optional, Union
+
+from gbcg3.cgmap.cgmap import CGMap
+from gbcg3.gbcg.core import (
+    assign_CG_types,
+    get_CG_coords,
+    reduction_mapping,
+    temp_types,
+    unwrap_mols,
+)
+from gbcg3.structure.lammps import LammpsStructure
+from gbcg3.structure.utils import process_frame, skip_frame
 from gbcg3.utils.io import (
-    write_data_file,
+    make_directories,
     write_CG_lammpstrj,
     write_CG_map,
     write_CG_pdb,
     write_CG_xyz,
-    write_xyz,
+    write_data_file,
     write_groups,
+    write_xyz,
 )
-from gbcg3.gbcg.core import (
-    reduction_mapping,
-    assign_CG_types,
-    temp_types,
-    unwrap_mols,
-    get_CG_coords,
-)
-import time
-import os
 
 
 @dataclass

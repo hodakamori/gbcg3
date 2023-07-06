@@ -1,7 +1,8 @@
-from math import *
 import datetime
-import numpy as np
 import os
+from math import *
+
+import numpy as np
 
 version = 1
 

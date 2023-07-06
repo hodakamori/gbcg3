@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
 from typing import Dict, Optional
-from gbcg3.utils.element_db import mass2el
+
 from gbcg3.gbcg.core import is_number
+from gbcg3.utils.element_db import mass2el
 
 
 @dataclass

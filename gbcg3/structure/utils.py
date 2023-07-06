@@ -1,3 +1,6 @@
+import numpy as np
+
+
 # ==================================================================
 #  AUX: append_to_dict
 # ==================================================================
@@ -13,11 +16,11 @@ def append_to_dict(dic, key, val):
 # ==================================================================
 def init_atoms(N):
     atoms = {}
-    atoms["coords"] = zeros([N, 3])
-    atoms["forces"] = zeros([N, 3])
+    atoms["coords"] = np.zeros([N, 3])
+    atoms["forces"] = np.zeros([N, 3])
     atoms["type"] = [0] * N
     atoms["id"] = {}
-    atoms["pos"] = zeros([N, 3])
+    atoms["pos"] = np.zeros([N, 3])
     atoms["charge"] = [0.0] * N
     return atoms
 
@@ -70,7 +73,7 @@ def get_charge_map(files, atoms):
 def process_frame(fid_list, inc_list, atoms):
     # EXTRACT HEADER INFORMATION
     natm = []
-    box = zeros([3, 2])
+    box = np.zeros([3, 2])
     for fid in fid_list:
         for i in range(2):
             fid.readline()
@@ -105,15 +108,15 @@ def process_frame(fid_list, inc_list, atoms):
             type_j = int(line[ind_typ])
             if inc_list == "all" or type_j in inc_list:
                 id_j = atoms["id"][ind_j]
-                atoms["coords"][id_j] = array(
+                atoms["coords"][id_j] = np.array(
                     [float(i) for i in [line[ind_x], line[ind_y], line[ind_z]]]
                 )
                 if forces_present:
-                    atoms["forces"][id_j] = array(
+                    atoms["forces"][id_j] = np.array(
                         [float(i) for i in [line[ind_fx], line[ind_fy], line[ind_fz]]]
                     )
                 else:
-                    atoms["forces"][id_j] = zeros([3])
+                    atoms["forces"][id_j] = np.zeros([3])
 
     return (atoms, L, 0.5 * L, box)
 
@@ -143,7 +146,7 @@ def screen_frame(traj_list, inc_list):
 
     # EXTRACT HEADER INFORMATION
     natm = []
-    box = zeros([3, 2])
+    box = np.zeros([3, 2])
     for fid in fid_list:
         for i in range(2):
             fid.readline()
@@ -181,8 +184,8 @@ def screen_frame(traj_list, inc_list):
                 count += 1
 
     # FINISH INITIALIZATION
-    atoms["coords"] = zeros([count, 3])
-    atoms["forces"] = zeros([count, 3])
+    atoms["coords"] = np.zeros([count, 3])
+    atoms["forces"] = np.zeros([count, 3])
     atoms["count"] = count
 
     # CLOSE FILES
