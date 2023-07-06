@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import List, TypeVar, Union
 
 from gbcg3.structure.aux import Atoms, get_adj_list, get_mass_map, load_atoms
-from numpy import *
 
 T = TypeVar("T", bound="LammpsStructure")
 

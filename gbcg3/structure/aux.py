@@ -1,7 +1,8 @@
-from typing import TypedDict, Dict, List, Literal, Union, Optional
-import numpy as np
 from logging import Logger
 from pathlib import Path
+from typing import Dict, List, Literal, Optional, TypedDict, Union
+
+import numpy as np
 from gbcg3.structure.utils import append_to_dict
 
 

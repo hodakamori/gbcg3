@@ -1,5 +1,6 @@
 from dataclasses import dataclass, field
-from typing import Dict, Optional
+from pathlib import Path
+from typing import Dict, Literal, Optional, TypedDict
 
 from gbcg3.gbcg.core import is_number
 from gbcg3.utils.element_db import mass2el
@@ -13,7 +14,9 @@ class CGMap:
     pmap: Optional[str] = None
     cgtypes: Dict[int, str] = field(default_factory=list)
 
-    def _process_mapfile(self, mapfile, map_type):
+    def _process_mapfile(
+        self, mapfile: Path, map_type: Literal["name", "priority"]
+    ) -> Dict[int, float]:
         the_map = {}
         if mapfile is not None:
             fid = open(mapfile, "r")
@@ -41,6 +44,6 @@ class CGMap:
                     )
         return the_map
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.names = self._process_mapfile(self.names, "name")
         self.priority = self._process_mapfile(self.pmap, "priority")
