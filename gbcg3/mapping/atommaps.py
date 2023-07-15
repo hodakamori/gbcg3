@@ -1,18 +1,17 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Literal, Optional, TypedDict
-
+from typing_extensions import Literal
+from typing import Dict, Optional
 from gbcg3.gbcg.core import is_number
 from gbcg3.utils.element_db import mass2el
 
 
 @dataclass
-class CGMap:
+class AtomMaps:
     mass_map: Dict[int, float] = field(default_factory=dict)
-    names: Dict[int, str] = field(default_factory=list)
-    priority: Dict[int, float] = field(default_factory=list)
-    pmap: Optional[str] = None
-    cgtypes: Dict[int, str] = field(default_factory=list)
+    name_mapfile: Path = None
+    priority_mapfile: Path = None
+    cgtypes: Dict[int, str] = field(default_factory=dict)
 
     def _process_mapfile(
         self, mapfile: Path, map_type: Literal["name", "priority"]
@@ -45,5 +44,5 @@ class CGMap:
         return the_map
 
     def __post_init__(self) -> None:
-        self.names = self._process_mapfile(self.names, "name")
-        self.priority = self._process_mapfile(self.pmap, "priority")
+        self.names_map = self._process_mapfile(self.name_mapfile, "name")
+        self.priority_map = self._process_mapfile(self.priority_mapfile, "priority")

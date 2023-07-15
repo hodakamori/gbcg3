@@ -56,7 +56,7 @@ class LammpsStructure:
 
     def assign_cgmap(self: T, cgmap) -> T:
         self.atoms["mass"] = [cgmap.mass_map[typ] for typ in self.atoms["type"]]
-        self.atoms["priority"] = [cgmap.priority[typ] for typ in self.atoms["type"]]
+        self.atoms["priority"] = [cgmap.priority_map[typ] for typ in self.atoms["type"]]
         return self
 
     def __post_init__(self: T):

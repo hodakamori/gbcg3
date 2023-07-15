@@ -3,9 +3,9 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import IO, List, Literal, Optional, Union
+from typing import List, Optional
 
-from gbcg3.cgmap.cgmap import CGMap
+from gbcg3.mapping import AtomMaps
 from gbcg3.gbcg.core import (
     assign_CG_types,
     get_CG_coords,
@@ -16,7 +16,6 @@ from gbcg3.gbcg.core import (
 from gbcg3.structure.lammps import LammpsStructure
 from gbcg3.structure.utils import process_frame, skip_frame
 from gbcg3.utils.io import (
-    make_directories,
     write_CG_lammpstrj,
     write_CG_map,
     write_CG_pdb,
@@ -30,7 +29,7 @@ from gbcg3.utils.io import (
 @dataclass
 class GraphBasedCoarseGraining:
     structure: LammpsStructure = None
-    cgmap: CGMap = None
+    cgmap: AtomMaps = None
 
     pdbdir: str = "pdb_files/"
     mapdir: str = "map_files/"
@@ -134,7 +133,7 @@ class GraphBasedCoarseGraining:
                 copy.deepcopy(self.structure.bonds),
             )
             write_groups(
-                self.output_dir, i, CGmoli, self.structure.atoms, self.cgmap.names
+                self.output_dir, i, CGmoli, self.structure.atoms, self.cgmap.names_map
             )
             self.cgmol.append(CGmoli)
             self.cghist.append(histi)
@@ -187,7 +186,7 @@ class GraphBasedCoarseGraining:
                 self.structure.atoms = unwrap_mols(
                     self.structure.atoms, self.structure.bonds, L, halfL
                 )
-                write_xyz(self.structure.atoms, self.cgmap.names, self.fall)
+                write_xyz(self.structure.atoms, self.cgmap.names_map, self.fall)
 
                 # WRITE OUT COORDINATES FOR THE GROUPS
                 molcpy = []
@@ -200,20 +199,20 @@ class GraphBasedCoarseGraining:
                             write_CG_pdb(
                                 tmp,
                                 self.structure.atoms,
-                                self.cgmap.names,
+                                self.cgmap.names_map,
                                 self.fpdb[i][j],
                             )
                             write_CG_map(
                                 tmp,
                                 self.structure.atoms,
-                                self.cgmap.names,
+                                self.cgmap.names_map,
                                 self.fmap[j],
                             )
                     tmp = get_CG_coords(copy.deepcopy(CGmoli), self.structure.atoms)
                     molcpy.append(tmp)
                     write_CG_lammpstrj(tmp, self.flmp[i], self.nsamp, box)
                     write_CG_xyz(
-                        tmp, self.structure.atoms, self.cgmap.names, self.fxyz[i]
+                        tmp, self.structure.atoms, self.cgmap.names_map, self.fxyz[i]
                     )
 
                 # WRITE OUT DATA FILE

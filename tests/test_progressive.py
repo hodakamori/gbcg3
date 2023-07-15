@@ -50,7 +50,7 @@ def test_progressive(testfile_dir, traj, data, mapfile, niter, min_level, max_le
             niter=niter,
             min_level=min_level,
             max_level=max_level,
-            names=os.path.join(testfile_dir, mapfile),
+            name_mapfile=os.path.join(testfile_dir, mapfile),
             output_dir=dname,
             log_level="ERROR",
         )

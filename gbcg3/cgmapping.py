@@ -1,9 +1,9 @@
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import IO, List, Literal, Optional
+from typing import List, Literal, Optional
 
-from gbcg3.cgmap.cgmap import CGMap
+from gbcg3.mapping import AtomMaps
 from gbcg3.gbcg.gbcg import GraphBasedCoarseGraining
 from gbcg3.structure.lammps import LammpsStructure
 
@@ -16,8 +16,8 @@ class AA2CG:
     min_level: List[int] = field(default_factory=[2, 2, 2, 2, 2])
     max_level: List[int] = field(default_factory=[6, 6, 6, 6, 6])
     output_dir: Optional[str] = os.getcwd()
-    names: Optional[str] = None
-    pmap: Optional[str] = None
+    name_mapfile: Optional[str] = None
+    priority_mapfile: Optional[str] = None
     sfreq: Optional[int] = 1
     max_samp: Optional[int] = 1
     sim_ratio: Optional[float] = 1
@@ -40,10 +40,10 @@ class AA2CG:
         self.structure = LammpsStructure(
             traj_list=self.traj, inc_list="all", data=self.data
         )
-        self.cgmap = CGMap(
+        self.cgmap = AtomMaps(
             mass_map=self.structure.mass_map,
-            names=self.names,
-            pmap=self.pmap,
+            name_mapfile=self.name_mapfile,
+            priority_mapfile=self.priority_mapfile,
         )
         self.structure.assign_cgmap(self.cgmap)
         self.structure.assign_mols()
