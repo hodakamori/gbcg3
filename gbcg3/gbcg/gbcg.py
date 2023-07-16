@@ -10,12 +10,9 @@ from gbcg3.gbcg.core import (
     get_CG_coords,
     reduction_mapping,
     temp_types,
-    unwrap_mols,
 )
-from gbcg3.mapping import AtomMaps
-from gbcg3.structure.lammps import LammpsStructure
-from gbcg3.structure.lammps.trajectory import process_frame, skip_frame
-from gbcg3.utils.io import (
+from gbcg3.gbcg.helpers import unwrap_mols
+from gbcg3.gbcg.io import (
     write_CG_lammpstrj,
     write_CG_map,
     write_CG_pdb,
@@ -24,6 +21,9 @@ from gbcg3.utils.io import (
     write_groups,
     write_xyz,
 )
+from gbcg3.mapping import AtomMaps
+from gbcg3.structure.lammps import LammpsStructure
+from gbcg3.structure.lammps.trajectory import process_frame, skip_frame
 
 
 @dataclass

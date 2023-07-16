@@ -1,8 +1,8 @@
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict
 
-from gbcg3.gbcg.core import is_number
+from gbcg3.gbcg.helpers import is_number
 from gbcg3.utils.element_db import mass2el
 from typing_extensions import Literal
 
