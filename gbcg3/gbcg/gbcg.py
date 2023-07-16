@@ -5,7 +5,6 @@ import time
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-from gbcg3.mapping import AtomMaps
 from gbcg3.gbcg.core import (
     assign_CG_types,
     get_CG_coords,
@@ -13,6 +12,7 @@ from gbcg3.gbcg.core import (
     temp_types,
     unwrap_mols,
 )
+from gbcg3.mapping import AtomMaps
 from gbcg3.structure.lammps import LammpsStructure
 from gbcg3.structure.lammps.trajectory import process_frame, skip_frame
 from gbcg3.utils.io import (

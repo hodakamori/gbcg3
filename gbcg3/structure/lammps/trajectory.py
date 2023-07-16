@@ -1,6 +1,7 @@
 from logging import Logger
 from pathlib import Path
 from typing import List, Union
+
 import numpy as np
 from gbcg3.structure.lammps.types import Atoms
 

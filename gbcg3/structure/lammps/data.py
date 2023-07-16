@@ -1,6 +1,7 @@
 from logging import Logger
 from pathlib import Path
 from typing import Dict, List
+
 from gbcg3.structure.lammps.helpers import append_to_dict
 from gbcg3.structure.lammps.types import Atoms
 

@@ -3,8 +3,8 @@ import os
 from dataclasses import dataclass, field
 from typing import List, Literal, Optional
 
-from gbcg3.mapping import AtomMaps
 from gbcg3.gbcg.gbcg import GraphBasedCoarseGraining
+from gbcg3.mapping import AtomMaps
 from gbcg3.structure.lammps import LammpsStructure
 
 
