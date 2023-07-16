@@ -47,7 +47,7 @@ class GraphBasedCoarseGraining:
     sim_ratio: Optional[float] = 1
     typing: Optional[str] = "all"
 
-    def _open_files(self):
+    def _open_files(self) -> None:
         # make the directories to contain coordinate files
         fxyz = []
         flmp = []
@@ -94,7 +94,6 @@ class GraphBasedCoarseGraining:
             fmap,
             fall,
         )
-        return fxyz, flmp, fpdb, fmap, fall
 
     def __post_init__(self):
         self.logger = logging.getLogger("gbcg3")
