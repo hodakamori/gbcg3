@@ -1,70 +1,66 @@
+from logging import Logger
+from pathlib import Path
+from typing import List, Union
 import numpy as np
+from gbcg3.structure.lammps.types import Atoms
 
 
-# ==================================================================
-#  AUX: append_to_dict
-# ==================================================================
-def append_to_dict(dic, key, val):
-    if key in dic:
-        dic[key].append(val)
-    else:
-        dic[key] = [val]
+def load_atoms(traj_list: List[Path], inc_list: Union[str, List[Path]]) -> Atoms:
+    # OPEN FILES
+    fid_list = [0] * len(traj_list)
+    for i, f in enumerate(traj_list):
+        fid_list[i] = open(f, "r")
+        fid_list[i].readline()
 
-
-# ==================================================================
-#  AUX: init_atoms
-# ==================================================================
-def init_atoms(N):
-    atoms = {}
-    atoms["coords"] = np.zeros([N, 3])
-    atoms["forces"] = np.zeros([N, 3])
-    atoms["type"] = [0] * N
-    atoms["id"] = {}
-    atoms["pos"] = np.zeros([N, 3])
-    atoms["charge"] = [0.0] * N
-    return atoms
-
-
-# ==================================================================
-#  AUX: get_charge_map
-# ==================================================================
-def get_charge_map(files, atoms):
-    if files["data"] != "none":
-        print("# Extracting charges from ", files["data"], " ...")
-        fid = open(files["data"])
+    # EXTRACT HEADER INFORMATION
+    natm = []
+    box = np.zeros([3, 2])
+    for fid in fid_list:
+        for i in range(2):
+            fid.readline()
         line = fid.readline().strip().split()
-        qtot = 0.0
-        while True:
-            if len(line) == 2 and line[1] == "atoms":
-                natm = int(line[0])
-                print("# A total of ", natm, " atoms reported!!!")
-            if len(line) == 3 and line[1] == "atom" and line[2] == "types":
-                ntype = int(line[0])
-                q4type = [0.0] * ntype
-                n4type = [0.0] * ntype
-            if len(line) >= 1 and line[0] == "Atoms":
-                fid.readline()
-                for j in range(natm):
-                    line = fid.readline().strip().split()
-                    ind = int(line[0])
-                    typ = int(line[2])
-                    q = float(line[3])
-                    if ind in atoms["id"]:
-                        ptr = atoms["id"][ind]
-                        atoms["charge"][ptr] = q
-                        qtot += q
-                    q4type[typ - 1] += q
-                    n4type[typ - 1] += 1.0
-                fid.close()
-                break
-            line = fid.readline().strip().split()
-    qavg = [qi / ni if ni > 0 else 0 for qi, ni in zip(q4type, n4type)]
+        natm += [int(line[0])]
+        fid.readline()
 
-    # create a type dictionary
-    qmap = {}
-    for i in range(ntype):
-        qmap[i + 1] = qavg[i]
-    return qmap
+        # GET BOX INFORMATION
+        box[0][:] = [v for v in fid.readline().strip().split()]
+        box[1][:] = [v for v in fid.readline().strip().split()]
+        box[2][:] = [v for v in fid.readline().strip().split()]
+        line = fid.readline().strip().split()
+        line = line[2:]
+        ind_id = line.index("id")
+        ind_typ = line.index("type")
+
+    # PARTIALLY INITIALIZE 'atoms' STRUCTURE
+    atoms: Atoms = {}
+    atoms["id"] = {}
+    atoms["type"] = []
+    atoms["charge"] = []
+
+    # GET ATOM INFORMATION
+    L = box[:, 1] - box[:, 0]
+    count = 0
+    for i, fid in enumerate(fid_list):
+        for j in range(natm[i]):
+            line = fid.readline().strip().split()
+            ind_j = int(line[ind_id])
+            type_j = int(line[ind_typ])
+            if inc_list == "all" or type_j in inc_list:
+                atoms["id"][ind_j] = count
+                atoms["type"] += [type_j]
+                atoms["charge"] += [0.0]
+                count += 1
+
+    # FINISH INITIALIZATION
+    atoms["coords"] = np.zeros([count, 3])
+    atoms["forces"] = np.zeros([count, 3])
+    atoms["count"] = count
+
+    # CLOSE FILES
+    for i, f in enumerate(traj_list):
+        fid_list[i].close()
+
+    return atoms
 
 
 # ==================================================================

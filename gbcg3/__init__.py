@@ -7,3 +7,5 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+
+from gbcg3.cgmapping import AA2CG

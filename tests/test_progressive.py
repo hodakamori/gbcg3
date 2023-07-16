@@ -4,7 +4,7 @@ import tempfile
 from typing import List
 
 import pytest
-from gbcg3.cgmapping import AA2CG
+from gbcg3 import AA2CG
 
 
 def compare_files(test_file_path: str, expect_file_path: str) -> List[str]:

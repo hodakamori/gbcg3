@@ -14,7 +14,7 @@ from gbcg3.gbcg.core import (
     unwrap_mols,
 )
 from gbcg3.structure.lammps import LammpsStructure
-from gbcg3.structure.utils import process_frame, skip_frame
+from gbcg3.structure.lammps.trajectory import process_frame, skip_frame
 from gbcg3.utils.io import (
     write_CG_lammpstrj,
     write_CG_map,
