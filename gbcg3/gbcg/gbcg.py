@@ -179,7 +179,6 @@ class GraphBasedCoarseGraining:
                     write_CG_xyz(
                         tmp, self.structure.atoms, self.cgmap.names_map, self.fxyz[i]
                     )
-
                 # WRITE OUT DATA FILE
                 if self.nsamp == 0:
                     write_data_file(

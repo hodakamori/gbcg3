@@ -6,6 +6,7 @@ from typing import IO, List, Union
 import numpy as np
 from gbcg3.gbcg.helpers import approximate_sigma, compute_angle, wrap_into_box
 from gbcg3.structure.lammps import LammpsStructure
+from gbcg3.structure.lammps.types import Atoms
 
 version = 1
 
@@ -65,7 +66,9 @@ def open_files(
     )
 
 
-def write_data_file(ftyp, output_dir, atoms, CGmols, box, nOfType, CGmap) -> None:
+def write_data_file(
+    ftyp: IO, output_dir: Path, atoms: Atoms, CGmols, box, nOfType, CGmap
+) -> None:
     # acquire system information
     nCgType = len(nOfType)
     nBonType = 0
