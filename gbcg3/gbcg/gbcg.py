@@ -13,6 +13,7 @@ from gbcg3.gbcg.core import (
 )
 from gbcg3.gbcg.helpers import unwrap_mols
 from gbcg3.gbcg.io import (
+    open_files,
     write_CG_lammpstrj,
     write_CG_map,
     write_CG_pdb,
@@ -48,51 +49,16 @@ class GraphBasedCoarseGraining:
     typing: Optional[str] = "all"
 
     def _open_files(self) -> None:
-        # make the directories to contain coordinate files
-        fxyz = []
-        flmp = []
-        fpdb = [[] for mol in self.structure.mols]
-        fmap = []
-        fall = open(os.path.join(self.output_dir, "atoms.xyz"), "w")
-
-        for i, moli in enumerate(self.structure.mols):
-            fname_xyz = os.path.join(self.output_dir, self.xyzdir, f"CG.mol_{i}.xyz")
-            fname_lmp = os.path.join(
-                self.output_dir, self.lmpdir, f"CG.mol_{i}.lampstrj"
-            )
-            fname_pdb = os.path.join(self.output_dir, self.pdbdir, f"CG.mol_{i}.0.pdb")
-            fxyz.append(open(fname_xyz, "w"))
-            flmp.append(open(fname_lmp, "w"))
-            fpdb[i].append(open(fname_pdb, "w"))
-            for iIter in range(self.niter):
-                for lvl in range(
-                    self.min_level[iIter],
-                    self.max_level[iIter] + 1,
-                    1,
-                ):
-                    fname_pdb = os.path.join(
-                        self.output_dir, self.pdbdir, f"mol_{i}.{iIter+1}_{lvl}.pdb"
-                    )
-                    fpdb[i].append(open(fname_pdb, "w"))
-
-        fname_map = os.path.join(self.output_dir, self.mapdir, "CG.map")
-        fmap.append(open(fname_map, "w"))
-        for iIter in range(self.niter):
-            for lvl in range(
-                self.min_level[iIter],
-                self.max_level[iIter] + 1,
-                1,
-            ):
-                fname_map = os.path.join(
-                    self.output_dir, self.mapdir, f"iter.{iIter+1}_{lvl}.map"
-                )
-                fmap.append(open(fname_map, "w"))
-        self.fxyz, self.flmp, self.fpdb, self.fmap, self.fall = (
-            fxyz,
-            flmp,
-            fpdb,
-            fmap,
-            fall,
+        self.fxyz, self.flmp, self.fpdb, self.fmap, self.fall = open_files(
+            self.structure,
+            self.output_dir,
+            self.xyzdir,
+            self.lmpdir,
+            self.pdbdir,
+            self.mapdir,
+            self.niter,
+            self.min_level,
+            self.max_level,
         )
 
     def __post_init__(self):

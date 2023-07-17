@@ -2,8 +2,66 @@ import datetime
 import os
 import numpy as np
 from gbcg3.gbcg.helpers import wrap_into_box, approximate_sigma, compute_angle
+from gbcg3.structure.lammps import LammpsStructure
+from pathlib import Path
+from typing import List, IO, Union
 
 version = 1
+
+
+def open_files(
+    structure: LammpsStructure,
+    output_dir: Path,
+    xyzdir: Path,
+    lmpdir: Path,
+    pdbdir: Path,
+    mapdir: Path,
+    niter: int,
+    min_level: List[int],
+    max_level: List[int],
+) -> List[Union[List[IO], IO]]:
+    # make the directories to contain coordinate files
+    fxyz = []
+    flmp = []
+    fpdb = [[] for mol in structure.mols]
+    fmap = []
+    fall = open(os.path.join(output_dir, "atoms.xyz"), "w")
+
+    for i, moli in enumerate(structure.mols):
+        fname_xyz = os.path.join(output_dir, xyzdir, f"CG.mol_{i}.xyz")
+        fname_lmp = os.path.join(output_dir, lmpdir, f"CG.mol_{i}.lampstrj")
+        fname_pdb = os.path.join(output_dir, pdbdir, f"CG.mol_{i}.0.pdb")
+        fxyz.append(open(fname_xyz, "w"))
+        flmp.append(open(fname_lmp, "w"))
+        fpdb[i].append(open(fname_pdb, "w"))
+        for iIter in range(niter):
+            for lvl in range(
+                min_level[iIter],
+                max_level[iIter] + 1,
+                1,
+            ):
+                fname_pdb = os.path.join(
+                    output_dir, pdbdir, f"mol_{i}.{iIter+1}_{lvl}.pdb"
+                )
+                fpdb[i].append(open(fname_pdb, "w"))
+
+    fname_map = os.path.join(output_dir, mapdir, "CG.map")
+    fmap.append(open(fname_map, "w"))
+    for iIter in range(niter):
+        for lvl in range(
+            min_level[iIter],
+            max_level[iIter] + 1,
+            1,
+        ):
+            fname_map = os.path.join(output_dir, mapdir, f"iter.{iIter+1}_{lvl}.map")
+            fmap.append(open(fname_map, "w"))
+    return (
+        fxyz,
+        flmp,
+        fpdb,
+        fmap,
+        fall,
+    )
 
 
 def write_data_file(ftyp, output_dir, atoms, CGmols, box, nOfType, CGmap) -> None:
