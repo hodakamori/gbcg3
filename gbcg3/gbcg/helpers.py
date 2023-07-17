@@ -1,5 +1,6 @@
-import numpy as np
 from math import floor
+
+import numpy as np
 
 
 def is_number(s):

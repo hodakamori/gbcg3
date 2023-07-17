@@ -9,9 +9,6 @@ import numpy as np
 mlight = 3.500
 
 
-# ==================================================================
-#  AUX: get_bead_coords
-# ==================================================================
 def get_bead_coords(chain, atoms):
     nbeads = len(chain["groups"])
     coords = np.zeros([nbeads, 3])
@@ -25,9 +22,6 @@ def get_bead_coords(chain, atoms):
     return coords
 
 
-# ==================================================================
-#  AUX: prioritize
-# ==================================================================
 def prioritize(thisId, avail, atoms, adjlist):
     # first screen by connectivity
     rank = [len(adjlist[i]) for i in avail]
@@ -38,15 +32,15 @@ def prioritize(thisId, avail, atoms, adjlist):
         rank = [pi if ri == maxC else 0 for ri, pi in zip(rank, pval)]
         maxC = max(rank)
         if rank.count(maxC) > 1:
-            printf(
+            print(
                 "# Priority is ambiguous for assignment of atom {} to the following: ".format(
                     thisId
                 )
             )
             for theId, theRank in zip(avail, rank):
                 if theRank == maxC:
-                    printf("{} ".format(theId))
-                printf(
+                    print("{} ".format(theId))
+                print(
                     "\n# Consider a different set of priority values. Just rolling with the first one for now...\n"
                 )
         return avail[rank.index(maxC)]
@@ -54,9 +48,6 @@ def prioritize(thisId, avail, atoms, adjlist):
         return avail[rank.index(maxC)]
 
 
-# ==================================================================
-#  AUX: get_CG_coords
-# ==================================================================
 def get_CG_coords(mol, atoms):
     for node, group in mol.items():
         nodeId = atoms["id"][node]
@@ -74,9 +65,6 @@ def get_CG_coords(mol, atoms):
     return mol
 
 
-# ==================================================================
-#  AUX: add_if_heavy
-# ==================================================================
 def add_if_heavy(node, neighbor, beads, atoms):
     nid = atoms["id"][neighbor]
     mi = atoms["mass"][nid]
@@ -91,9 +79,6 @@ def add_if_heavy(node, neighbor, beads, atoms):
     return
 
 
-# ==================================================================
-#  AUX: how_many_heavy
-# ==================================================================
 def how_many_heavy(node, nlist, beads, atoms, options):
     nheavy = 0
     for neighbor in nlist:
@@ -110,9 +95,6 @@ def how_many_heavy(node, nlist, beads, atoms, options):
     return nheavy
 
 
-# ==================================================================
-#  AUX: get_mass
-# ==================================================================
 def get_mass(atoms, node, group):
     m = atoms["mass"][atoms["id"][node]]
     for i in group:
@@ -120,9 +102,6 @@ def get_mass(atoms, node, group):
     return m
 
 
-# ==================================================================
-#  AUX: contract
-# ==================================================================
 def contract(curr, touched, queue, node, neighbors, neighCN, minCN, atoms, max_size):
     # def contract(curr, touched, queue, node, neighbors, neighCN, minCN, atoms, options):
     contractList = [n for n, c in zip(neighbors, neighCN) if c <= minCN]  # testing
@@ -178,9 +157,6 @@ def contract(curr, touched, queue, node, neighbors, neighCN, minCN, atoms, max_s
     return curr, touched, queue
 
 
-# ==================================================================
-#  AUX: make_level_queue
-# ==================================================================
 def make_level_queue(beads, lvl, atoms, touched):
     queue = []
     queue = [i for i, beadi in beads.items() if len(beadi["adj"]) == lvl]
@@ -201,9 +177,6 @@ def make_level_queue(beads, lvl, atoms, touched):
     return queue
 
 
-# ==================================================================
-#  AUX: reorder_queue
-# ==================================================================
 def reorder_queue(queue, touched, beads, tried):
     # ordering 1
     req = [i for i in queue]
@@ -220,9 +193,6 @@ def reorder_queue(queue, touched, beads, tried):
     return queue
 
 
-# ==================================================================
-#  AUX: get_overlap
-# ==================================================================
 def get_overlap(listi, listj):
     n = 0
     ni = len(listi)
@@ -234,9 +204,6 @@ def get_overlap(listi, listj):
     return float(n) / float(max(ni, nj))
 
 
-# ==================================================================
-#  AUX: add_type
-# ==================================================================
 def add_type(typing, atoms, Id, group):
     typ = atoms["type"][Id]
     if typing == "heavy":
@@ -247,9 +214,6 @@ def add_type(typing, atoms, Id, group):
     return
 
 
-# ==================================================================
-#  AUX: update_charge
-# ==================================================================
 def update_charge(beadList, atoms):
     for node, bead in beadList.items():
         iId = atoms["id"][node]
@@ -261,9 +225,6 @@ def update_charge(beadList, atoms):
     return
 
 
-# ==================================================================
-#  AUX: update_masses
-# ==================================================================
 def update_masses(beadList, atoms):
     for node, bead in beadList.items():
         iId = atoms["id"][node]
@@ -275,9 +236,6 @@ def update_masses(beadList, atoms):
     return
 
 
-# ==================================================================
-#  AUX: temp_types
-# ==================================================================
 def temp_types(typing, sim_ratio, atoms, beadsList):
     # aggregate and count constituent atom types
     typeList = []
@@ -389,9 +347,6 @@ def temp_types(typing, sim_ratio, atoms, beadsList):
     return atoms, beadsList
 
 
-# ==================================================================
-#  AUX: assign_CG_types
-# ==================================================================
 def assign_CG_types(output_dir, typing, sim_ratio, atoms, beadsList):
     # aggregate and count constituent atom types
     typeList = []

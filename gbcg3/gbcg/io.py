@@ -1,10 +1,11 @@
 import datetime
 import os
-import numpy as np
-from gbcg3.gbcg.helpers import wrap_into_box, approximate_sigma, compute_angle
-from gbcg3.structure.lammps import LammpsStructure
 from pathlib import Path
-from typing import List, IO, Union
+from typing import IO, List, Union
+
+import numpy as np
+from gbcg3.gbcg.helpers import approximate_sigma, compute_angle, wrap_into_box
+from gbcg3.structure.lammps import LammpsStructure
 
 version = 1
 
