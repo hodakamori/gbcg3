@@ -2,6 +2,8 @@
 
 gbcg3 is a Python package that automates the creation of coarse-grained models for molecular simulations from all-atom models. This package reimplements [Graph-based coarse graining method](https://github.com/xmwebb/GBCG) in Python 3, providing an efficient tool for the modern computational chemistry community.
 
+![](./profile_pic.png)
+
 ## Features
 
 - **Automated Generation of Coarse-grained Models**: gbcg3 can generate coarse-grained models for molecular simulations from full atomistic models, streamlining the process and reducing the amount of manual work required.
