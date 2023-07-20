@@ -1,0 +1,24 @@
+units                real
+boundary             p p p
+box                  tilt large
+pair_style           lj/cut/coul/cut 10.0 10.0
+pair_modify          mix arithmetic tail yes
+atom_style           full
+special_bonds        amber
+bond_style           harmonic
+angle_style          harmonic
+dihedral_style       fourier
+improper_style       cvff
+read_data            polymer.data
+neigh_modify         delay 0 every 1 check yes
+minimize             0.0001 1e-06 1000 10000
+fix                  SHAKE all shake 0.0001 20 0 m 1
+
+thermo               1000
+thermo_style         custom step time pe ke etotal enthalpy temp press vol density
+dump                 eq1 all custom 1000 polymer.lammpstrj id type x y z fx fy fz vx vy vz
+dump_modify          eq1 sort id pbc yes
+timestep             1
+fix                  eq1 all nvt temp 300 300 1000
+run                  5000
+

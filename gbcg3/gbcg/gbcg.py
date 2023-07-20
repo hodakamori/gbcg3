@@ -42,7 +42,7 @@ class GraphBasedCoarseGraining:
     max_level: List[int] = field(default_factory=[6, 6, 6, 6, 6])
     output_dir: str = None
 
-    max_samp: Optional[float] = 1.0
+    max_samp: Optional[int] = 1
     sfreq: Optional[float] = 1.0
     max_size: Optional[float] = float("inf")
     sim_ratio: Optional[float] = 1

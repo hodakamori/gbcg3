@@ -1,0 +1,158 @@
+LAMMPS (28 Mar 2023 - Update 1)
+OMP_NUM_THREADS environment is not set. Defaulting to 1 thread. (src/comm.cpp:98)
+  using 1 OpenMP thread(s) per MPI task
+units                real
+boundary             p p p
+box                  tilt large
+
+The 'box' command has been removed and will be ignored
+
+pair_style           lj/cut/coul/cut 10.0 10.0
+pair_modify          mix arithmetic tail yes
+atom_style           full
+special_bonds        amber
+bond_style           harmonic
+angle_style          harmonic
+dihedral_style       fourier
+improper_style       cvff
+read_data            polymer.data
+Reading data file ...
+  orthogonal box = (-100 -100 -100) to (100 100 100)
+  1 by 1 by 1 MPI processor grid
+  reading atoms ...
+  1508 atoms
+  scanning bonds ...
+  4 = max bonds/atom
+  scanning angles ...
+  6 = max angles/atom
+  scanning dihedrals ...
+  24 = max dihedrals/atom
+  scanning impropers ...
+  1 = max impropers/atom
+  reading bonds ...
+  1507 bonds
+  reading angles ...
+  2812 angles
+  reading dihedrals ...
+  3809 dihedrals
+  reading impropers ...
+  100 impropers
+Finding 1-2 1-3 1-4 neighbors ...
+  special bond factors lj:    0        0        0.5     
+  special bond factors coul:  0        0        0.8333333333333334
+     4 = max # of 1-2 neighbors
+    11 = max # of 1-3 neighbors
+    22 = max # of 1-4 neighbors
+    26 = max # of special neighbors
+  special bonds CPU = 0.005 seconds
+  read_data CPU = 0.086 seconds
+neigh_modify         delay 0 every 1 check yes
+minimize             0.0001 1e-06 1000 10000
+Generated 15 of 15 mixed pair_coeff terms from arithmetic mixing rule
+Neighbor list info ...
+  update: every = 1 steps, delay = 0 steps, check = yes
+  max neighbors/atom: 2000, page size: 100000
+  master list distance cutoff = 12
+  ghost atom cutoff = 12
+  binsize = 6, bins = 34 34 34
+  1 neighbor lists, perpetual/occasional/extra = 1 0 0
+  (1) pair lj/cut/coul/cut, perpetual
+      attributes: half, newton on
+      pair build: half/bin/newton
+      stencil: half/bin/3d
+      bin: standard
+Per MPI rank memory allocation (min/avg/max) = 19.64 | 19.64 | 19.64 Mbytes
+   Step          Temp          E_pair         E_mol          TotEng         Press     
+         0   0              5012.9944      2609.3671      7622.3615      56.031632    
+         2   0              4890.8701      2574.2423      7465.1124      58.43188     
+Loop time of 0.290234 on 1 procs for 2 steps with 1508 atoms
+
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+Minimization stats:
+  Stopping criterion = linesearch alpha is zero
+  Energy initial, next-to-last, final = 
+      7622.36149673388   7465.11241340964   7465.11241340964
+  Force two-norm initial, final = 658.86188 318.23875
+  Force max component initial, final = 210.43685 81.240466
+  Final line search alpha, max atom move = 8.5338631e-14 6.9329501e-12
+  Iterations, force evaluations = 2 70
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 0.24936    | 0.24936    | 0.24936    |   0.0 | 85.92
+Bond    | 0.039628   | 0.039628   | 0.039628   |   0.0 | 13.65
+Neigh   | 0          | 0          | 0          |   0.0 |  0.00
+Comm    | 6.67e-05   | 6.67e-05   | 6.67e-05   |   0.0 |  0.02
+Output  | 0          | 0          | 0          |   0.0 |  0.00
+Modify  | 0          | 0          | 0          |   0.0 |  0.00
+Other   |            | 0.00118    |            |       |  0.41
+
+Nlocal:           1508 ave        1508 max        1508 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:         230109 ave      230109 max      230109 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 230109
+Ave neighs/atom = 152.59218
+Ave special neighs/atom = 10.779841
+Neighbor list builds = 0
+Dangerous builds = 0
+fix                  SHAKE all shake 0.0001 20 0 m 1
+Finding SHAKE clusters ...
+       0 = # of size 2 clusters
+     100 = # of size 3 clusters
+     202 = # of size 4 clusters
+       0 = # of frozen angles
+  find clusters CPU = 0.011 seconds
+
+thermo               1000
+thermo_style         custom step time pe ke etotal enthalpy temp press vol density
+dump                 eq1 all custom 1000 polymer.lammpstrj id type x y z fx fy fz vx vy vz
+dump_modify          eq1 sort id pbc yes
+timestep             1
+fix                  eq1 all nvt temp 300 300 1000
+run                  5000
+Generated 15 of 15 mixed pair_coeff terms from arithmetic mixing rule
+Per MPI rank memory allocation (min/avg/max) = 20.21 | 20.21 | 20.21 Mbytes
+   Step          Time          PotEng         KinEng         TotEng        Enthalpy         Temp          Press          Volume        Density    
+         2   2              7437.0639      0              7437.0639      13789.96       0              54.451001      8000000        0.0020843437 
+      1000   1000           6184.2642      704.7549       6889.0191      7140.5293      190.92651      2.1557071      8000000        0.0020843437 
+      2000   2000           6315.675       860.23752      7175.9125      6779.0726      233.04861     -3.4013357      8000000        0.0020843437 
+      3000   3000           6450.8358      966.5494       7417.3852      7209.0261      261.84977     -1.785857       8000000        0.0020843437 
+      4000   4000           6936.8649      1051.8368      7988.7017      8305.2685      284.95514      2.7133106      8000000        0.0020843437 
+      5000   5000           6590.2374      1151.1259      7741.3633      7239.629       311.85375     -4.3003911      8000000        0.0020843437 
+      5002   5002           6566.6185      1146.9503      7713.5687      7256.1798      310.72251     -3.9203047      8000000        0.0020843437 
+Loop time of 13.07 on 1 procs for 5000 steps with 1508 atoms
+
+Performance: 33.053 ns/day, 0.726 hours/ns, 382.556 timesteps/s, 576.895 katom-step/s
+99.7% CPU use with 1 MPI tasks x 1 OpenMP threads
+
+MPI task timing breakdown:
+Section |  min time  |  avg time  |  max time  |%varavg| %total
+---------------------------------------------------------------
+Pair    | 9.6538     | 9.6538     | 9.6538     |   0.0 | 73.86
+Bond    | 2.1708     | 2.1708     | 2.1708     |   0.0 | 16.61
+Neigh   | 0.81759    | 0.81759    | 0.81759    |   0.0 |  6.26
+Comm    | 0.011679   | 0.011679   | 0.011679   |   0.0 |  0.09
+Output  | 0.029609   | 0.029609   | 0.029609   |   0.0 |  0.23
+Modify  | 0.35324    | 0.35324    | 0.35324    |   0.0 |  2.70
+Other   |            | 0.03334    |            |       |  0.26
+
+Nlocal:           1508 ave        1508 max        1508 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Nghost:              0 ave           0 max           0 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+Neighs:         176100 ave      176100 max      176100 min
+Histogram: 1 0 0 0 0 0 0 0 0 0
+
+Total # of neighbors = 176100
+Ave neighs/atom = 116.77719
+Ave special neighs/atom = 10.779841
+Neighbor list builds = 206
+Dangerous builds = 0
+
+Total wall time: 0:00:13

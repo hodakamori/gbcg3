@@ -2,14 +2,12 @@
 name = "gbcg3"
 version = "0.1.0"
 description = ""
-authors = ["hodakamori <kpnhodaka@gmail.com>"]
+authors = ["hodakamori <hodaka.mori.office@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.9"
 numpy = "^1.25.0"
-ipykernel = "^6.24.0"
-
 
 [tool.poetry.group.dev.dependencies]
 pysen = "^0.10.4"
@@ -18,6 +16,7 @@ isort = "^5.12.0"
 black = "^23.7.0"
 flake8 = "^6.0.0"
 mypy = "^1.4.1"
+ipykernel = "^6.24.0"
 
 [build-system]
 requires = ["poetry-core"]
