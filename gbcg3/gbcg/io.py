@@ -1,7 +1,7 @@
 import datetime
 import os
 from pathlib import Path
-from typing import IO, List, Union
+from typing import IO, List, Union, Literal
 
 import numpy as np
 from gbcg3.gbcg.helpers import approximate_sigma, compute_angle, wrap_into_box
@@ -21,6 +21,7 @@ def open_files(
     niter: int,
     min_level: List[int],
     max_level: List[int],
+    mode: Literal["progressive", "spectral"],
 ) -> List[Union[List[IO], IO]]:
     # make the directories to contain coordinate files
     fxyz = []
@@ -37,26 +38,37 @@ def open_files(
         flmp.append(open(fname_lmp, "w"))
         fpdb[i].append(open(fname_pdb, "w"))
         for iIter in range(niter):
-            for lvl in range(
-                min_level[iIter],
-                max_level[iIter] + 1,
-                1,
-            ):
-                fname_pdb = os.path.join(
-                    output_dir, pdbdir, f"mol_{i}.{iIter+1}_{lvl}.pdb"
-                )
+            if mode == "progressive":
+                for lvl in range(
+                    min_level[iIter],
+                    max_level[iIter] + 1,
+                    1,
+                ):
+                    fname_pdb = os.path.join(
+                        output_dir, pdbdir, f"mol_{i}.{iIter+1}_{lvl}.pdb"
+                    )
+                    fpdb[i].append(open(fname_pdb, "w"))
+            elif mode == "spectral":
+                fname_pdb = os.path.join(output_dir, pdbdir, f"mol_{i}.{iIter+1}.pdb")
                 fpdb[i].append(open(fname_pdb, "w"))
 
     fname_map = os.path.join(output_dir, mapdir, "CG.map")
     fmap.append(open(fname_map, "w"))
     for iIter in range(niter):
-        for lvl in range(
-            min_level[iIter],
-            max_level[iIter] + 1,
-            1,
-        ):
-            fname_map = os.path.join(output_dir, mapdir, f"iter.{iIter+1}_{lvl}.map")
+        if mode == "progressive":
+            for lvl in range(
+                min_level[iIter],
+                max_level[iIter] + 1,
+                1,
+            ):
+                fname_map = os.path.join(
+                    output_dir, mapdir, f"iter.{iIter+1}_{lvl}.map"
+                )
+                fmap.append(open(fname_map, "w"))
+        elif mode == "spectral":
+            fname_map = os.path.join(output_dir, mapdir, f"iter.{iIter+1}.map")
             fmap.append(open(fname_map, "w"))
+
     return (
         fxyz,
         flmp,
@@ -67,7 +79,14 @@ def open_files(
 
 
 def write_data_file(
-    ftyp: IO, output_dir: Path, atoms: Atoms, CGmols, box, nOfType, CGmap
+    ftyp: IO,
+    output_dir: Path,
+    atoms: Atoms,
+    CGmols,
+    box,
+    nOfType,
+    CGmap,
+    mode: Literal["progressive", "spectral"],
 ) -> None:
     # acquire system information
     nCgType = len(nOfType)
@@ -204,15 +223,22 @@ def write_data_file(
             else:
                 dih = (l, k, j, i)
             if dih not in dihedrals:
-                if ityp < ltyp:
-                    dtype = (ityp, jtyp, ktyp, ltyp)
-                elif ltyp < ityp:
-                    dtype = (ltyp, ktyp, jtyp, ityp)
-                else:
-                    if jtyp < ktyp:
+                if mode == "progressive":
+                    if ityp < ltyp:
+                        dtype = (ityp, jtyp, ktyp, ltyp)
+                    elif ltyp < ityp:
+                        dtype = (ltyp, ktyp, jtyp, ityp)
+                    else:
+                        if jtyp < ktyp:
+                            dtype = (ityp, jtyp, ktyp, ltyp)
+                        else:
+                            dtype = (ltyp, ktyp, jtyp, ityp)
+                elif mode == "spectral":
+                    if ityp < ltyp:
                         dtype = (ityp, jtyp, ktyp, ltyp)
                     else:
                         dtype = (ltyp, ktyp, jtyp, ityp)
+
                 if dtype not in dtypes:
                     dtypes.append(dtype)
                 dihedrals.append(dih)
@@ -226,12 +252,18 @@ def write_data_file(
             else:
                 dih = (k, j, i, l)
             if dih not in dihedrals:
-                if ltyp < ktyp:
-                    dtype = (ltyp, ityp, jtyp, ktyp)
-                elif ktyp < ltyp:
-                    dtype = (ktyp, jtyp, ityp, ltyp)
-                else:
-                    if ityp < jtyp:
+                if mode == "progressive":
+                    if ltyp < ktyp:
+                        dtype = (ltyp, ityp, jtyp, ktyp)
+                    elif ktyp < ltyp:
+                        dtype = (ktyp, jtyp, ityp, ltyp)
+                    else:
+                        if ityp < jtyp:
+                            dtype = (ltyp, ityp, jtyp, ktyp)
+                        else:
+                            dtype = (ktyp, jtyp, ityp, ltyp)
+                elif mode == "spectral":
+                    if ltyp < ktyp:
                         dtype = (ltyp, ityp, jtyp, ktyp)
                     else:
                         dtype = (ktyp, jtyp, ityp, ltyp)
@@ -318,16 +350,36 @@ def write_data_file(
     # CHECK CHARGES
     qtot = 0.0
     ntot = 0.0
-    for j, mol in enumerate(CGmols):
-        qmol = 0.0
-        for i in sorted(mol.keys()):
-            bead = mol[i]
-            ityp = bead["type"]
-            qmol += CGmap[ityp]["charge"]
-            qtot += CGmap[ityp]["charge"]
-            ntot += 1.0
-        print("# Charge for molecule {}: {}".format(j, qmol))
-    qavg = qtot / ntot
+
+    if mode == "progressive":
+        for j, mol in enumerate(CGmols):
+            qmol = 0.0
+            for i in sorted(mol.keys()):
+                bead = mol[i]
+                ityp = bead["type"]
+                qmol += CGmap[ityp]["charge"]
+                qtot += CGmap[ityp]["charge"]
+                ntot += 1.0
+            print(f"# Charge for molecule {j}: {qmol}")
+        qavg = qtot / ntot
+
+    elif mode == "spectral":
+        for j, mol in enumerate(CGmols):
+            for i in sorted(mol.keys()):
+                bead = mol[i]
+                ityp = bead["type"]
+                qtot += CGmap[ityp]["charge"]
+                ntot += 1.0
+        print(f"# The total charge in the CG system is {round(qtot,6)}")
+        qavg = qtot / ntot
+        print(f"# Subtracting residual of {round(qavg,6)} to neutralize...")
+        qtot = 0.0
+        for j, mol in enumerate(CGmols):
+            for i in sorted(mol.keys()):
+                bead = mol[i]
+                ityp = bead["type"]
+                qtot += CGmap[ityp]["charge"]
+        print(f"# Now total system charge is {round(qtot,6)}")
 
     # Atoms
     fid.write("\nAtoms\n\n")

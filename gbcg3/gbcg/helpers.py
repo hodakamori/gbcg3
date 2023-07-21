@@ -75,3 +75,28 @@ def unwrap_mols(atoms, bonds, L, halfL):
             wait.extend(neighbors)  # add neighbors to wait list
         queue = list(set(wait[:]))  # make queue the wait list
     return atoms
+
+
+def eigenvalue(A, v):
+    Av = A.dot(v)
+    return v.dot(Av)
+
+
+def power_iteration(A):
+    n, d = A.shape
+
+    v = np.ones(d) / np.sqrt(d)
+    ev = eigenvalue(A, v)
+
+    while True:
+        Av = A.dot(v)
+        v_new = Av / np.linalg.norm(Av)
+
+        ev_new = eigenvalue(A, v_new)
+        if np.abs(ev - ev_new) < 1e-15:
+            break
+
+        v = v_new
+        ev = ev_new
+
+    return ev_new, v_new
