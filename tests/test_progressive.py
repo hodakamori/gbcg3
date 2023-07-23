@@ -1,9 +1,10 @@
 import os
 import tempfile
-from .utils import compare_files
 
 import pytest
 from gbcg3 import AA2CG
+
+from .utils import compare_files
 
 
 @pytest.mark.parametrize(

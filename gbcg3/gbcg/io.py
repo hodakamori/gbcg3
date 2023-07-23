@@ -1,7 +1,7 @@
 import datetime
 import os
 from pathlib import Path
-from typing import IO, List, Union, Literal
+from typing import IO, List, Literal, Union
 
 import numpy as np
 from gbcg3.gbcg.helpers import approximate_sigma, compute_angle, wrap_into_box

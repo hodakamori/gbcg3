@@ -1,14 +1,9 @@
 import copy
 import os
-
-import numpy as np
-from gbcg3.gbcg.helpers import power_iteration
 from typing import Literal, Optional
 
-# ==================================================================
-# CONSTANTS AND DIRECTORIES
-# ==================================================================
-mlight = 3.500
+import numpy as np
+from gbcg3.gbcg.helpers import mlight, power_iteration
 
 
 def get_bead_coords(chain, atoms):
@@ -621,11 +616,12 @@ def reduction_mapping(
 
     # Start coordination level reductions, contracting from degree 2 and up
     for iIter in range(niter):
+        logger.info(f"Iteration {iIter + 1}")
+        logger.info(f"Reduction Round {iIter + 1}.")
+        logger.info(f"Initial number of groups: {len(curr)}")
+        touched = set()
+
         if mode == "progressive":
-            logger.info(f"Iteration {iIter + 1}")
-            logger.info(f"Reduction Round {iIter + 1}.")
-            logger.info(f"Initial number of groups: {len(curr)}")
-            touched = set()
             for lvl in range(min_level[iIter], max_level[iIter] + 1):
                 logger.info(f"# Examining nodes with degree equal to {lvl}...")
                 queue = make_level_queue(curr, lvl, atoms, touched, mode)
@@ -689,11 +685,6 @@ def reduction_mapping(
                 history.append(copy.deepcopy(curr))
 
         elif mode == "spectral":
-            logger.info(f"Iteration {iIter+1}")
-            logger.info(f"Reduction Round {iIter+1}")
-            logger.info(f"Initial number of groups: {len(curr)}")
-            touched = set()
-
             queue = init_queue(curr, atoms, touched)
             queue, weights = page_rank(
                 output_dir, weight_style, queue, curr, touched, iIter

@@ -98,3 +98,6 @@ def power_iteration(A):
         ev = ev_new
 
     return ev_new, v_new
+
+
+mlight = 3.500

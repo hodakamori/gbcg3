@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional, Literal
+from typing import List, Literal, Optional
 
 from gbcg3.gbcg.core import (
     assign_CG_types,
@@ -38,17 +38,15 @@ class GraphBasedCoarseGraining:
     mapdir: str = "map_files/"
     xyzdir: str = "xyz_files/"
     lmpdir: str = "lammpstrj_files/"
+    output_dir: str = None
 
     min_level: Optional[List[int]] = field(default_factory=[2, 2, 2, 2, 2])
     max_level: Optional[List[int]] = field(default_factory=[6, 6, 6, 6, 6])
-    output_dir: str = None
-
     max_samp: Optional[int] = 1
     sfreq: Optional[float] = 1.0
     max_size: Optional[float] = float("inf")
     sim_ratio: Optional[float] = 1
     typing: Optional[str] = "all"
-
     weight_style: Optional[Literal["mass", "diff"]] = None
 
     def _open_files(self) -> None:
