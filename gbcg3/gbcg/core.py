@@ -557,7 +557,7 @@ def reduction_mapping(
     atoms,
     adjlist,
     mode: Literal["progressive", "spectral"],
-    weight_style: Optional[Literal["mass", "diff"]] = "mass",
+    weight_style: Optional[Literal["mass", "diff"]] = None,
 ):
     history = []
     curr = {}
@@ -566,7 +566,6 @@ def reduction_mapping(
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # Set up initial list and mark atoms to be reduced
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    print(mode)
     logger.info(f"Initial Number of atoms: {len(moli)}")
     logger.info(f"# Beginning coarse-graining of molecule with {len(moli)} atoms")
     for i in moli:
@@ -622,11 +621,11 @@ def reduction_mapping(
 
     # Start coordination level reductions, contracting from degree 2 and up
     for iIter in range(niter):
-        logger.info(f"Iteration {iIter + 1}")
-        logger.info(f"Reduction Round {iIter + 1}.")
-        logger.info(f"Initial number of groups: {len(curr)}")
-        touched = set()
         if mode == "progressive":
+            logger.info(f"Iteration {iIter + 1}")
+            logger.info(f"Reduction Round {iIter + 1}.")
+            logger.info(f"Initial number of groups: {len(curr)}")
+            touched = set()
             for lvl in range(min_level[iIter], max_level[iIter] + 1):
                 logger.info(f"# Examining nodes with degree equal to {lvl}...")
                 queue = make_level_queue(curr, lvl, atoms, touched, mode)
@@ -690,13 +689,17 @@ def reduction_mapping(
                 history.append(copy.deepcopy(curr))
 
         elif mode == "spectral":
+            logger.info(f"Iteration {iIter+1}")
+            logger.info(f"Reduction Round {iIter+1}")
+            logger.info(f"Initial number of groups: {len(curr)}")
+            touched = set()
+
             queue = init_queue(curr, atoms, touched)
             queue, weights = page_rank(
                 output_dir, weight_style, queue, curr, touched, iIter
             )  # gives page rank queue
             wlast = weights[queue[0]]
             tlist = set()
-
             while queue:
                 node = queue.pop(0)  # obtain index for first in queue
                 wcurr = weights[node]
@@ -734,6 +737,13 @@ def reduction_mapping(
                                 node = major
                         if not tryNextGroup:
                             break
+            update_masses(curr, atoms)
+            update_charge(curr, atoms)
+            logger.info("# Queue is exhausted and vertex groups formed...")
+            logger.info(f"# There are currently {len(curr)} vertex groups...")
+            logger.info(f"Reduction at level {iIter} --> {len(curr)} groups")
+            history.append(copy.deepcopy(curr))
+
     return curr, history
 
 
@@ -789,12 +799,10 @@ def page_rank(output_dir, weight_style, queue, nodes, touched, iIter):
         for j in jlinks:
             A[i, j] = 1.0
             A[j, i] = 1.0
-
     # COMPUTE MAX EIGENVALUE
     alphaMax, Vmax = power_iteration(A)
     Vmax /= Vmax[0]
     sortVec = [x for x in Vmax]
-
     # this is the list sorted by eigenvector for largest eigenvalue
     sortList = [
         x

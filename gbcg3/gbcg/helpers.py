@@ -84,10 +84,8 @@ def eigenvalue(A, v):
 
 def power_iteration(A):
     n, d = A.shape
-
     v = np.ones(d) / np.sqrt(d)
     ev = eigenvalue(A, v)
-
     while True:
         Av = A.dot(v)
         v_new = Av / np.linalg.norm(Av)

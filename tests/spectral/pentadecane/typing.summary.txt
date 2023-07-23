@@ -1,0 +1,19 @@
+#===========================
+# Typing Summary
+#===========================
+# Total number of CG beads: 2
+# Total number of CG types: 2
+              Ncg    <mass>    <charge> 
+-CG Type   1:   1      155.304      0.000
+-CG Type   2:   1       57.115      0.000
+
+~~~~~CG TYPES~~~~~
+Type 1: 1 2 2 2 2 2 2 2 2 2 2 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 
+Type 2: 1 2 2 2 3 3 3 3 3 3 3 3 3 
+
+~~~~~BOND TYPES~~~~~
+Type 1: (1)--(2)
+
+~~~~~ANGLE TYPES~~~~~
+
+~~~~~DIHEDRAL TYPES~~~~~
