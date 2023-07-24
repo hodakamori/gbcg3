@@ -12,9 +12,10 @@ from gbcg3.structure.lammps import LammpsStructure
 class AA2CG:
     traj: List[str] = None
     data: str = None
+    mode: Literal["progressive", "spectral"] = "progressive"
     niter: int = None
-    min_level: List[int] = field(default_factory=[2, 2, 2, 2, 2])
-    max_level: List[int] = field(default_factory=[6, 6, 6, 6, 6])
+    min_level: Optional[List[int]] = field(default_factory=lambda: [2, 2, 2, 2, 2])
+    max_level: Optional[List[int]] = field(default_factory=lambda: [6, 6, 6, 6, 6])
     output_dir: Optional[str] = os.getcwd()
     name_mapfile: Optional[str] = None
     priority_mapfile: Optional[str] = None
@@ -27,6 +28,7 @@ class AA2CG:
         Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     ] = logging.DEBUG
     log_filename: Optional[str] = None
+    weight_style: Optional[Literal["mass", "diff"]] = None
 
     def __post_init__(self) -> None:
         self.logger = logging.getLogger("gbcg3")
@@ -61,6 +63,8 @@ class AA2CG:
             sim_ratio=self.sim_ratio,
             typing=self.typing,
             output_dir=self.output_dir,
+            weight_style=self.weight_style,
+            mode=self.mode,
         )
         gbcg.map_molecules()
         gbcg.assign_cg_type()

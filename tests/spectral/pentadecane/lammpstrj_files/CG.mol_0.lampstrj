@@ -1,0 +1,11 @@
+ITEM: TIMESTEP
+	0
+ITEM: NUMBER OF ATOMS
+	2
+ITEM: BOX BOUNDS pp pp pp
+  -15.0000   15.0000
+  -15.0000   15.0000
+  -15.0000   15.0000
+ITEM: ATOMS id type x y z
+1         2        -8.7952      0.0648      0.0044
+2         1         0.7599      0.6566      0.0040

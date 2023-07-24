@@ -1,12 +1,9 @@
 import copy
 import os
+from typing import Literal, Optional
 
 import numpy as np
-
-# ==================================================================
-# CONSTANTS AND DIRECTORIES
-# ==================================================================
-mlight = 3.500
+from gbcg3.gbcg.helpers import mlight, power_iteration
 
 
 def get_bead_coords(chain, atoms):
@@ -102,7 +99,9 @@ def get_mass(atoms, node, group):
     return m
 
 
-def contract(curr, touched, queue, node, neighbors, neighCN, minCN, atoms, max_size):
+def contract_progressive(
+    curr, touched, queue, node, neighbors, neighCN, minCN, atoms, max_size
+):
     # def contract(curr, touched, queue, node, neighbors, neighCN, minCN, atoms, options):
     contractList = [n for n, c in zip(neighbors, neighCN) if c <= minCN]  # testing
     mList = [get_mass(atoms, n, curr[n]["in"]) for n in contractList]
@@ -157,38 +156,94 @@ def contract(curr, touched, queue, node, neighbors, neighCN, minCN, atoms, max_s
     return curr, touched, queue
 
 
-def make_level_queue(beads, lvl, atoms, touched):
+def contract_spectral(curr, touched, queue, major, minor, atoms, max_size):
+    # determine if major node will absorb the minor node
+    mmajor = get_mass(atoms, major, curr[major]["in"])
+    mminor = get_mass(atoms, minor, curr[minor]["in"])
+    if mmajor + mminor > max_size:
+        foundNode = False
+    else:
+        foundNode = True
+        touched.add(major)
+    if foundNode:
+        curr[major]["in"].add(minor)
+        add_if_heavy(major, minor, curr, atoms)
+        curr[minor]["adj"].remove(
+            major
+        )  # remove contractor from adjacency list of contracted
+        curr[major]["adj"].remove(
+            minor
+        )  # remove contracted from adjacency list of contractor
+        curr[major]["adj"].update(
+            curr[minor]["adj"]
+        )  # resolve the adjacency list of contracted
+        curr[major]["in"].update(
+            curr[minor]["in"]
+        )  # resolve the container list of contracted
+        # modify adjacency lists of neighbors to point to new node
+        for i in curr[minor]["adj"]:
+            curr[i]["adj"].remove(minor)
+            curr[i]["adj"].add(major)
+        del curr[minor]  # remove contracted from current list
+        while minor in queue:
+            queue.pop(queue.index(minor))
+        while major in queue:
+            queue.pop(queue.index(major))
+    touched.add(minor)
+
+    return foundNode, curr, touched, queue
+
+
+def make_level_queue(
+    beads, lvl, atoms, touched, mode: Literal["progressive", "spectral"]
+):
     queue = []
     queue = [i for i, beadi in beads.items() if len(beadi["adj"]) == lvl]
     istouched = [1 if i in touched else 0 for i in queue]
     queue = [i for i in queue if i not in touched]
-    nheavy = [beads[node]["nheavy"] for node in queue]
-    nn = [len(beads[node]["adj"] - touched) for node in queue]
-    ndg = [
-        sum(
-            [len(beads[cnct]["adj"] - touched) for cnct in beads[node]["adj"] - touched]
-        )
-        for node in queue
-    ]
-    val = [1000 * i + 100 * j + 10 * k for i, j, k in zip(nheavy, nn, ndg)]
-    queue = [
-        q for (p, q) in sorted(zip(val, queue), key=lambda pair: pair[0], reverse=True)
-    ]
+    if mode == "progressive":
+        nheavy = [beads[node]["nheavy"] for node in queue]
+        nn = [len(beads[node]["adj"] - touched) for node in queue]
+        ndg = [
+            sum(
+                [
+                    len(beads[cnct]["adj"] - touched)
+                    for cnct in beads[node]["adj"] - touched
+                ]
+            )
+            for node in queue
+        ]
+        val = [1000 * i + 100 * j + 10 * k for i, j, k in zip(nheavy, nn, ndg)]
+        queue = [
+            q
+            for (p, q) in sorted(
+                zip(val, queue), key=lambda pair: pair[0], reverse=True
+            )
+        ]
     return queue
 
 
-def reorder_queue(queue, touched, beads, tried):
+def reorder_queue(
+    queue, touched, beads, tried, mode: Literal["progressive", "spectral"]
+):
     # ordering 1
     req = [i for i in queue]
-
-    nheavy = [beads[node]["nheavy"] for node in req]
-    nn = [len(beads[node]["adj"] - touched) for node in req]
-    ndg = [
-        sum([len(beads[cnct]["adj"] - touched) for cnct in beads[i]["adj"] - touched])
-        for i in req
-    ]
-    val = [1000 * i + 100 * j + 10 * k for i, j, k in zip(nheavy, nn, ndg)]
-    req = [q for (p, q) in sorted(zip(nn, req), key=lambda pair: pair[0], reverse=True)]
+    if mode == "progressive":
+        nheavy = [beads[node]["nheavy"] for node in req]
+        nn = [len(beads[node]["adj"] - touched) for node in req]
+        ndg = [
+            sum(
+                [
+                    len(beads[cnct]["adj"] - touched)
+                    for cnct in beads[i]["adj"] - touched
+                ]
+            )
+            for i in req
+        ]
+        val = [1000 * i + 100 * j + 10 * k for i, j, k in zip(nheavy, nn, ndg)]
+        req = [
+            q for (p, q) in sorted(zip(nn, req), key=lambda pair: pair[0], reverse=True)
+        ]
     queue = req
     return queue
 
@@ -487,7 +542,17 @@ def assign_CG_types(output_dir, typing, sim_ratio, atoms, beadsList):
 # 'coords' - coordinates of the bead
 # 'id' - assigned ID
 def reduction_mapping(
-    logger, niter, min_level, max_level, max_size, moli, atoms, adjlist
+    output_dir,
+    logger,
+    niter,
+    min_level,
+    max_level,
+    max_size,
+    moli,
+    atoms,
+    adjlist,
+    mode: Literal["progressive", "spectral"],
+    weight_style: Optional[Literal["mass", "diff"]] = None,
 ):
     history = []
     curr = {}
@@ -555,27 +620,49 @@ def reduction_mapping(
         logger.info(f"Reduction Round {iIter + 1}.")
         logger.info(f"Initial number of groups: {len(curr)}")
         touched = set()
-        for lvl in range(min_level[iIter], max_level[iIter] + 1):
-            logger.info(f"# Examining nodes with degree equal to {lvl}...")
-            queue = make_level_queue(curr, lvl, atoms, touched)
-            tried = set()
-            logger.info(f"# There are {len(queue)} nodes in the queue...")
-            while queue:
-                node = queue.pop(0)  # obtain index for first in queue
-                if get_mass(atoms, node, curr[node]["in"]) >= max_size:
-                    touched.add(node)
-                else:
-                    neighbors = (
-                        curr[node]["adj"] - touched
-                    )  # set of neighbors who are not in the touch list
-                    if neighbors:
-                        neighCN = [
-                            len(curr[n]["adj"]) for n in neighbors
-                        ]  # number of connections for neighbor (including with 'node')
-                        minCN = min(neighCN)
-                        if minCN == lvl:  # if no one with lower connectivity,
-                            if node in tried:
-                                curr, touched, queue = contract(
+
+        if mode == "progressive":
+            for lvl in range(min_level[iIter], max_level[iIter] + 1):
+                logger.info(f"# Examining nodes with degree equal to {lvl}...")
+                queue = make_level_queue(curr, lvl, atoms, touched, mode)
+                tried = set()
+                logger.info(f"# There are {len(queue)} nodes in the queue...")
+                while queue:
+                    node = queue.pop(0)  # obtain index for first in queue
+                    if get_mass(atoms, node, curr[node]["in"]) >= max_size:
+                        touched.add(node)
+                    else:
+                        neighbors = (
+                            curr[node]["adj"] - touched
+                        )  # set of neighbors who are not in the touch list
+                        if neighbors:
+                            neighCN = [
+                                len(curr[n]["adj"]) for n in neighbors
+                            ]  # number of connections for neighbor (including with 'node')
+                            minCN = min(neighCN)
+                            if minCN == lvl:  # if no one with lower connectivity,
+                                if node in tried:
+                                    curr, touched, queue = contract_progressive(
+                                        curr,
+                                        touched,
+                                        queue,
+                                        node,
+                                        neighbors,
+                                        neighCN,
+                                        minCN,
+                                        atoms,
+                                        max_size,
+                                    )
+                                else:
+                                    tried.add(node)
+                                    queue.append(
+                                        node
+                                    )  # then send to end of queue for now
+                            elif minCN > lvl:  # if only higher connectivity
+                                touched.add(node)
+                            else:  # otherwise find all lowest
+                                minCN = lvl - 1  # testing
+                                curr, touched, queue = contract_progressive(
                                     curr,
                                     touched,
                                     queue,
@@ -586,34 +673,143 @@ def reduction_mapping(
                                     atoms,
                                     max_size,
                                 )
-                            else:
-                                tried.add(node)
-                                queue.append(node)  # then send to end of queue for now
-                        elif minCN > lvl:  # if only higher connectivity
-                            touched.add(node)
-                        else:  # otherwise find all lowest
-                            minCN = lvl - 1  # testing
-                            curr, touched, queue = contract(
-                                curr,
-                                touched,
-                                queue,
-                                node,
-                                neighbors,
-                                neighCN,
-                                minCN,
-                                atoms,
-                                max_size,
-                            )
 
-                    else:
-                        touched.add(node)
-                    queue = reorder_queue(queue, touched, curr, tried)
+                        else:
+                            touched.add(node)
+                        queue = reorder_queue(queue, touched, curr, tried, mode)
+                update_masses(curr, atoms)
+                update_charge(curr, atoms)
+                logger.info("# Queue is exhausted and vertex groups formed...")
+                logger.info(f"# There are currently {len(curr)} vertex groups...")
+                logger.info(f"Reduction at level {lvl} --> {len(curr)} groups")
+                history.append(copy.deepcopy(curr))
+
+        elif mode == "spectral":
+            queue = init_queue(curr, atoms, touched)
+            queue, weights = page_rank(
+                output_dir, weight_style, queue, curr, touched, iIter
+            )  # gives page rank queue
+            wlast = weights[queue[0]]
+            tlist = set()
+            while queue:
+                node = queue.pop(0)  # obtain index for first in queue
+                wcurr = weights[node]
+                if wcurr != wlast:
+                    for major in tlist:
+                        touched.add(major)
+                    tlist = set()
+                wlast = wcurr
+
+                # check mass to see if available for contraction
+                if get_mass(atoms, node, curr[node]["in"]) >= max_size:
+                    touched.add(node)
+                else:
+                    neighbors = list(curr[node]["adj"])  # set of neighbors
+                    neighbors = [n for n in neighbors if n not in touched]
+                    wneigh = np.array([weights[j] for j in neighbors])
+                    neighbors = [
+                        n
+                        for w, n in sorted(
+                            zip(wneigh, neighbors), key=lambda pair: (pair[0], pair[1])
+                        )
+                        if w >= weights[node]
+                    ]  # sorted by weights
+                    wneigh = [weights[j] for j in neighbors]
+                    ngroups = make_weight_groups(wneigh, neighbors)
+                    for majorgroup in ngroups:
+                        tryNextGroup = True
+                        while majorgroup:
+                            major = majorgroup.pop(0)
+                            foundNode, curr, tlist, queue = contract_spectral(
+                                curr, tlist, queue, major, node, atoms, max_size
+                            )
+                            if foundNode:
+                                tryNextGroup = False
+                                node = major
+                        if not tryNextGroup:
+                            break
             update_masses(curr, atoms)
             update_charge(curr, atoms)
             logger.info("# Queue is exhausted and vertex groups formed...")
             logger.info(f"# There are currently {len(curr)} vertex groups...")
-            logger.info(f"Reduction at level {lvl} --> {len(curr)} groups")
+            logger.info(f"Reduction at level {iIter} --> {len(curr)} groups")
             history.append(copy.deepcopy(curr))
 
-    # summary.write("\n\n")
     return curr, history
+
+
+def make_weight_groups(weights, neighbors):
+    unique = list(np.unique(weights))
+    groups = [[] for i in range(len(unique))]
+    for i, wi in enumerate(weights):
+        j = unique.index(wi)
+        groups[j].extend([neighbors[i]])
+    return groups
+
+
+def init_queue(beads, atoms, touched):
+    queue = []
+    queue = [i for i, beadi in beads.items()]
+    istouched = [1 if i in touched else 0 for i in queue]
+    queue = [i for i in queue if i not in touched]
+    return queue
+
+
+def page_rank(output_dir, weight_style, queue, nodes, touched, iIter):
+    nodeList = sorted(nodes.keys())
+    N = len(nodeList)
+    A = np.zeros([N, N])
+    Dsqrt = np.zeros([N, N])
+    D = np.zeros([N, N])
+
+    # GET TOTAL MASS
+    if weight_style == "mass" or weight_style == "diff":
+        mtot = 0.0
+        ntot = 0.0
+        mmax = 0.0
+        mmin = 1e7
+        for i, ni in enumerate(nodeList):
+            mtot += nodes[ni]["mass"]
+            mmax = max([mmax, nodes[ni]["mass"]])
+            mmin = min([mmin, nodes[ni]["mass"]])
+            ntot += 1
+        mavg = mtot / ntot
+
+    # construct standard adjacency matrix and the d
+    for i, ni in enumerate(nodeList):
+        jlinks = [nodeList.index(link) for link in nodes[ni]["adj"]]
+        degree = len(jlinks)
+
+        if weight_style == "mass":
+            A[i, i] = nodes[ni]["mass"] / mmax
+        elif weight_style == "diff":
+            A[i, i] = (nodes[ni]["mass"] - mmin) / mavg
+        if degree > 0:
+            Dsqrt[i, i] = 1.0  # / degree**0.5
+            D[i, i] = degree  # / degree**0.5
+        for j in jlinks:
+            A[i, j] = 1.0
+            A[j, i] = 1.0
+    # COMPUTE MAX EIGENVALUE
+    alphaMax, Vmax = power_iteration(A)
+    Vmax /= Vmax[0]
+    sortVec = [x for x in Vmax]
+    # this is the list sorted by eigenvector for largest eigenvalue
+    sortList = [
+        x
+        for _, x in sorted(zip(sortVec, nodeList), key=lambda pair: (pair[0], pair[1]))
+    ]
+    rank = [sortList.index(bead) for bead in queue]
+    queue = [q for (r, q) in sorted(zip(rank, queue))]
+
+    weights = {}
+    fid = open(os.path.join(output_dir, f"evec.dat.{iIter}"), "w")
+    # fid = open("evec.dat.{}".format(iIter), "w")
+    i = 1
+    for weight, node in zip(sortVec, nodeList):
+        weights[node] = weight
+        fid.write("{} {} {}\n".format(node, float(weight), float(alphaMax)))
+        i += 1
+    fid.close()
+
+    return queue, weights

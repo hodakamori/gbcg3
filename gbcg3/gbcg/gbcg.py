@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Literal, Optional
 
 from gbcg3.gbcg.core import (
     assign_CG_types,
@@ -31,22 +31,23 @@ from gbcg3.structure.lammps.trajectory import process_frame, skip_frame
 class GraphBasedCoarseGraining:
     structure: LammpsStructure = None
     cgmap: AtomMaps = None
+    mode: Literal["progressive", "spectral"] = "progressive"
+    niter: int = 5
 
     pdbdir: str = "pdb_files/"
     mapdir: str = "map_files/"
     xyzdir: str = "xyz_files/"
     lmpdir: str = "lammpstrj_files/"
-
-    niter: int = 5
-    min_level: List[int] = field(default_factory=[2, 2, 2, 2, 2])
-    max_level: List[int] = field(default_factory=[6, 6, 6, 6, 6])
     output_dir: str = None
 
+    min_level: Optional[List[int]] = field(default_factory=[2, 2, 2, 2, 2])
+    max_level: Optional[List[int]] = field(default_factory=[6, 6, 6, 6, 6])
     max_samp: Optional[int] = 1
     sfreq: Optional[float] = 1.0
     max_size: Optional[float] = float("inf")
     sim_ratio: Optional[float] = 1
     typing: Optional[str] = "all"
+    weight_style: Optional[Literal["mass", "diff"]] = None
 
     def _open_files(self) -> None:
         self.fxyz, self.flmp, self.fpdb, self.fmap, self.fall = open_files(
@@ -59,6 +60,7 @@ class GraphBasedCoarseGraining:
             self.niter,
             self.min_level,
             self.max_level,
+            self.mode,
         )
 
     def __post_init__(self):
@@ -88,6 +90,7 @@ class GraphBasedCoarseGraining:
         for i, moli in enumerate(self.structure.mols):
             self.logger.info("Reduction Summary for molecule {}\n\n".format(i))
             CGmoli, histi = reduction_mapping(
+                self.output_dir,
                 self.logger,
                 self.niter,
                 self.min_level,
@@ -96,6 +99,8 @@ class GraphBasedCoarseGraining:
                 moli,
                 self.structure.atoms,
                 copy.deepcopy(self.structure.bonds),
+                self.mode,
+                weight_style=self.weight_style,
             )
             write_groups(
                 self.output_dir, i, CGmoli, self.structure.atoms, self.cgmap.names_map
@@ -189,6 +194,7 @@ class GraphBasedCoarseGraining:
                         box,
                         self.nCgType,
                         self.cgmap.cgtypes,
+                        self.mode,
                     )
 
                 # FINISH BOOK KEEPING

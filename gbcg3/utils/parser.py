@@ -102,6 +102,13 @@ def create_parser():
         help="File name to list initial priority values for lammps atom types. Atom types assigned a value of -1 will be contracted before any coarse-graining iterations. If no file is supplied, then the mass from the data file is used for this purpose, and atoms with mass < -3.5 are given a -1 value. (default: none)",
     )
 
+    parser.add_argument(
+        "-weights",
+        dest="weights",
+        default="none",
+        help='Style of vertex weights to be used in adjacency matrix. Available options include "mass" and "diff"  (default = "none")',
+    )
+
     return parser
 
 
@@ -122,6 +129,7 @@ def convert_args(args):
     options["min_level"] = [int(lvl) for lvl in args.min_level.split()]
     options["max_level"] = [int(lvl) for lvl in args.max_level.split()]
     options["niter"] = int(args.niter)
+    options["weightStyle"] = args.weights
 
     # EXECUTE CONSISTENCY CHECKS
     if options["niter"] != len(options["min_level"]):
